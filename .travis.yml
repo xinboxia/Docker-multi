@@ -6,7 +6,10 @@ script:
   - docker run -e CI=true xinboxia/react-test npm test
 
 before_install:
-  - docker build -t xinboxia/react-test -f ./client/Dockerfile.dev
+  - docker build -t xinboxia/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true xinboxia/react-test npm test
 
 after_success:
   - docker build -t xinboxia/multi-client -f ./client
