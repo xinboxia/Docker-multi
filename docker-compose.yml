@@ -1,0 +1,66 @@
+version: '3'
+services: 
+  # name of the service
+  postgres:
+    image: 'postgres:latest'
+    environment: 
+      POSTGRES_HOST_AUTH_METHOD: 'trust'
+  redis: 
+    image: 'redis:latest'
+  nginx:
+    depends_on: 
+      - api
+      - client
+    restart: always
+    build: 
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - '3090:80'
+
+
+
+
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./server
+    volumes: 
+      # don't overwrite this folders because we do not want to 
+      # copy this again and again
+      - /app/node_modules
+      # map whatever in our server into the app folder inside container
+      - ./server:/app
+    # we need to specify value for environment variables
+    environment: 
+      - REDIS_HOST=redis
+      # set to default port
+      - REDIS_PORT=6379
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+
+  client:
+    stdin_open: true
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes: 
+      - /app/node_modules
+      - ./client:/app
+
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment: 
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    
+
+
