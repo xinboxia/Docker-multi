@@ -2,15 +2,21 @@ language: generic
 sudo: required
 services: 
   - docker
+script:
+  - docker run -e CI=true xinboxia/react-test npm test
 
 before_install:
   - docker build -t xinboxia/react-test -f ./client/Dockerfile.dev
-
-script:
-  - docker run -e CI=true xinboxia/react-test npm test
 
 after_success:
   - docker build -t xinboxia/multi-client -f ./client
   - docker build -t xinboxia/multi-nginx -f ./nginx
   - docker build -t xinboxia/multi-server -f ./server
   - docker build -t xinboxia/multi-worker -f ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  - docker push xinboxia/multi-client
+  - docker push xinboxia/multi-nginx
+  - docker push xinboxia/multi-server
+  - docker push xinboxia/multi-worker
