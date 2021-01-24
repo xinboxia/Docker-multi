@@ -2,12 +2,12 @@ language: generic
 sudo: required
 services: 
   - docker
-script:
-  - docker run -e CI=true xinboxia/react-test npm test
 
+  # 先 用 Dockerfile.dev build react app，因为要测试
 before_install:
   - docker build -t xinboxia/react-test -f ./client/Dockerfile.dev ./client
 
+  # 测试 react app
 script:
   - docker run -e CI=true xinboxia/react-test npm test
 
@@ -19,20 +19,23 @@ after_success:
 
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
 
+  # push 到 docker hub
   - docker push xinboxia/multi-client
   - docker push xinboxia/multi-nginx
   - docker push xinboxia/multi-server
   - docker push xinboxia/multi-worker
 
-
+# deploy 到 aws
 deploy:
   provider: elasticbeanstalk
   region: 'us-west-1'
   app: 'multi-docker'
   env: 'MultiDocker-env'
   bucket_name: 'elasticbeanstalk-us-west-1-762283273395'
+  # 自定义 要创建的 folder 名字 （s3里）
   bucket_path: 'docker-multi'
   on:
     branch: master
+  # 这俩 要 填到 travis_ci 里面
   access_key_id: $AWS_ACCESS_KEY
   secret_access_key: $AWS_SECRET_KEY
